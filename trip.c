@@ -23,7 +23,6 @@ enum sem{
 
 #define SEMOP         semop(id, &semb, 1)
 
-
 void pass(int id, int pass_number);
 void boat(int id);
 
@@ -58,11 +57,16 @@ int main()
 
     boat(id);
 
-    for(int i = 0; i < NUM_OF_SEMS-1; i++) //чтобы пассажиры не ждали пароход, которого уже не будет
-        semctl(id, i, SETVAL, 0);
+    /*for(int i = 0; i < NUM_OF_SEMS-1; i++) //чтобы пассажиры не ждали пароход, которого уже не будет
+        semctl(id, i, SETVAL, 0);*/
 
-    for(int i = 0; i < NUM_OF_SEMS-1; i++)
-        semctl(id, i, IPC_RMID);
+    /*for(int i = 0; i < NUM_OF_SEMS-1; i++)*/
+
+
+    semctl(id, 0, IPC_RMID);
+
+    for(int i = 0; i < N; i++)
+        wait(NULL);
 
     return 0;
 }
@@ -89,16 +93,6 @@ void boat(int id)
 
         printf("НАЧАЛО ПРОДАЖИ БИЛЕТОВ. ПОЕЗДКА НОМЕР:%d\n", i);
         semctl(id, tickets, SETVAL, M); // запускаем продажу билетов
-
-        /*semb_init(&semb, tickets, 0, 0);
-        if(SEMOP < 0) perror("zhopa"); // ждём когда продадут все билеты*/
-
-        /*semb_init(&semb, trap_beach, -1, 0);
-        if(SEMOP < 0) perror("bebra");
-        semb_init(&semb, trap_boat, -1, 0);
-        if(SEMOP < 0) perror("bebra"); // опускаем трап
-        printf("ТРАП ОПУЩЕН. \n");*/
-
 
         semb_init(&semb, bt, 0, 0);
         if(SEMOP < 0) perror("bebra"); // ждём заполнения всех мест на корабле
@@ -134,8 +128,10 @@ void pass(int id, int pass_number)
     {
 
         struct sembuf semb = {tickets, -1, 0};
-        SEMOP; // ждём свободные билеты
+        if(SEMOP == -1) return; // ждём свободные билеты
         printf("Пассажир н.%d купил билет\n", pass_number);
+
+        //сделать чтение состояния других семафоров
 
         semb_init(&semb, trap_beach, 0, 0);
         SEMOP; // ждём опускания трапа
